@@ -56,22 +56,6 @@
     if(window._pg==='gallery') window.renderGallery();
   });
 
-  // Theme real-time — syncs to all visitors
-  onSnapshot(collection(db,"settings"), snap => {
-    snap.docs.forEach(d => {
-      if(d.id === 'theme'){
-        const theme = d.data().value || '';
-        window._pendingTheme = theme;
-        document.body.classList.remove('theme-christmas','theme-easter','theme-newyear');
-        if(theme) document.body.classList.add('theme-'+theme);
-        window._currentTheme = theme;
-        // Call functions only if they exist (loaded after module)
-        if(typeof startParticles === 'function') startParticles(theme);
-        if(typeof updateTicker === 'function') updateTicker(theme);
-      }
-    });
-  });
-
   // Availability real-time
   onSnapshot(collection(db,"availability"), snap => {
     window._avail = {};
@@ -94,31 +78,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--navy:#0a1a5c;--navyD:#040e2a;--navyM:#071540;--blue:#1a4aaa;--blueL:#2a6fe8;--gold:#c8a432;--goldL:#e8c050;--goldD:#9a7a18;--white:#fff;--offW:#f4f7ff;--text:#0a1640;--muted:#4a6090}
-/* SEASONAL THEMES */
-body.theme-christmas{--navy:#0d3b1a;--navyD:#051a0a;--navyM:#0a2e14;--gold:#c8a432;--goldL:#e8c050}
-body.theme-christmas #hdr{background:linear-gradient(135deg,#051a0a,#0d3b1a)}
-body.theme-christmas .pbanner{background:linear-gradient(160deg,#051a0a,#0a2e14,#0d3b1a)}
-body.theme-christmas #hero{background:linear-gradient(160deg,#051a0a,#0a2e14,#0d3b1a)}
-body.theme-christmas #psec{background:linear-gradient(135deg,#051a0a,#0a2e14)}
-body.theme-christmas #bnav{background:#051a0a}
-body.theme-christmas #ahdr{background:linear-gradient(160deg,#051a0a,#0a2e14)}
-
-body.theme-easter{--navy:#2a0a4a;--navyD:#150525;--navyM:#1e0838;--gold:#e8b030;--goldL:#f0c850}
-body.theme-easter #hdr{background:linear-gradient(135deg,#150525,#2a0a4a)}
-body.theme-easter .pbanner{background:linear-gradient(160deg,#150525,#1e0838,#2a0a4a)}
-body.theme-easter #hero{background:linear-gradient(160deg,#150525,#1e0838,#2a0a4a)}
-body.theme-easter #psec{background:linear-gradient(135deg,#150525,#1e0838)}
-body.theme-easter #bnav{background:#150525}
-body.theme-easter #ahdr{background:linear-gradient(160deg,#150525,#1e0838)}
-
-body.theme-newyear{--navy:#0a2a5c;--navyD:#030e28;--navyM:#061840;--gold:#ffd700;--goldL:#ffe44d}
-body.theme-newyear #hdr{background:linear-gradient(135deg,#030e28,#0a2a5c)}
-body.theme-newyear .pbanner{background:linear-gradient(160deg,#030e28,#061840,#0a2a5c)}
-body.theme-newyear #hero{background:linear-gradient(160deg,#030e28,#061840,#0a2a5c)}
-body.theme-newyear #psec{background:linear-gradient(135deg,#030e28,#061840)}
-body.theme-newyear #bnav{background:#030e28}
-body.theme-newyear #ahdr{background:linear-gradient(160deg,#030e28,#061840)}
-body{font-family:'Source Serif 4',Georgia,serif;background:var(--offW);color:var(--text);padding-bottom:80px;min-height:100vh}
+body{font-family:'Source Serif 4',Georgia,serif;background:var(--offW);color:var(--text);padding-bottom:70px;min-height:100vh}
 html{background:var(--navyD)}
 a{text-decoration:none;color:inherit}button{cursor:pointer;font-family:inherit}
 /* HEADER */
@@ -128,14 +88,6 @@ a{text-decoration:none;color:inherit}button{cursor:pointer;font-family:inherit}
 .li img{width:90%;height:90%;object-fit:contain}
 .ln{color:#fff;font-size:clamp(10px,2.8vw,13px);font-weight:700;letter-spacing:.4px;line-height:1.2}
 .ll{color:var(--gold);font-size:9px;letter-spacing:2px;text-transform:uppercase}
-/* TICKER */
-@keyframes ticker-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-
-/* SEASONAL DECORATIONS */
-.season-particle{position:fixed;top:-20px;pointer-events:none;z-index:9999;animation:fall linear infinite;user-select:none}
-@keyframes fall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(360deg);opacity:.3}}
-@keyframes sway{0%,100%{margin-left:0}50%{margin-left:30px}}
-
 /* BOTTOM NAV */
 #bnav{position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--navyD);border-top:2px solid var(--gold);display:flex;height:66px;box-shadow:0 -4px 20px rgba(0,0,50,.45)}
 .ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border-top:3px solid transparent;transition:all .15s;padding:4px 2px;min-width:0}
@@ -197,11 +149,8 @@ a{text-decoration:none;color:inherit}button{cursor:pointer;font-family:inherit}
 .bgr{background:linear-gradient(135deg,#22a858,#126a30);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700}
 .brow{display:flex;gap:10px;flex-wrap:wrap}.bfull{width:100%;margin-bottom:12px;font-size:15px;padding:15px}
 /* PAGE BANNER */
-.pbanner{background:linear-gradient(160deg,var(--navyD) 0%,var(--navyM) 50%,var(--navy) 100%);padding:36px 20px 32px;text-align:center;border-bottom:3px solid var(--gold);position:relative;overflow:hidden}
-.pbanner::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(200,164,50,.12) 0%,transparent 70%);pointer-events:none}
-.pbanner::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),var(--goldL),var(--gold),transparent)}
-.btitle{color:#fff;font-family:'Playfair Display',serif;font-size:clamp(24px,5.5vw,36px);font-weight:700;margin:8px 0 0;text-shadow:0 2px 20px rgba(0,0,0,.4);position:relative;z-index:1}
-.eye.lt{position:relative;z-index:1}
+.pbanner{background:linear-gradient(160deg,var(--navyD) 0%,var(--navyM) 50%,var(--navy) 100%);padding:32px 20px 28px;text-align:center;border-bottom:2px solid var(--gold)}
+.btitle{color:#fff;font-family:'Playfair Display',serif;font-size:clamp(20px,5vw,30px);font-weight:700;margin:6px 0 0}
 /* SCHEDULE */
 .dtabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:20px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .dtabs::-webkit-scrollbar{display:none}
@@ -298,14 +247,6 @@ textarea.finp{height:85px;resize:vertical}
   </div>
 </header>
 
-<!-- SEASONAL TICKER -->
-<div id="season-ticker" style="display:none;background:var(--gold);overflow:hidden;height:32px;border-bottom:1px solid var(--goldD)">
-  <div id="ticker-track" style="display:flex;align-items:center;height:100%;white-space:nowrap;animation:ticker-scroll 30s linear infinite">
-    <span id="ticker-text" style="font-size:13px;font-weight:700;color:var(--navyD);padding-right:80px"></span>
-    <span id="ticker-text2" style="font-size:13px;font-weight:700;color:var(--navyD);padding-right:80px"></span>
-  </div>
-</div>
-
 <!-- HOME -->
 <div id="page-home" class="page active">
   <div id="hero">
@@ -392,7 +333,6 @@ textarea.finp{height:85px;resize:vertical}
     </div>
     <div style="color:#2a3860;font-size:11px">© 2026 Graceland Baptist Church · All rights reserved</div>
   </footer>
-<div style="height:2px;background:var(--navyD)"></div>
 </div>
 
 <!-- Schedule merged into Programs page -->
@@ -573,7 +513,6 @@ Long live Graceland Baptist Church, Ogbomoso!</div>
     <button class="atab" id="atab-birthdays" onclick="switchAdminTab('birthdays')">🎂 Birthdays</button>
     <button class="atab" id="atab-gallery" onclick="switchAdminTab('gallery')">🖼 Gallery</button>
     <button class="atab" id="atab-avail" onclick="switchAdminTab('avail')">📅 Availability</button>
-    <button class="atab" id="atab-theme" onclick="switchAdminTab('theme')">🎨 Theme</button>
   </div>
 
   <!-- APPOINTMENTS TAB -->
@@ -617,35 +556,6 @@ Long live Graceland Baptist Church, Ogbomoso!</div>
       <button class="bgr" onclick="openGF(null)">+ Add Photos</button>
     </div>
     <div id="agallery"><div class="loading">Loading...</div></div>
-  </div>
-
-  <!-- THEME TAB -->
-  <div id="admin-theme" class="atab-content sec" style="background:var(--offW);display:none">
-    <div style="font-weight:700;font-size:17px;color:var(--text);margin-bottom:6px">Seasonal Theme</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Change the site's color theme for special seasons. Only colors change — no text or content is affected.</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div onclick="setTheme('')" class="theme-card" style="background:linear-gradient(135deg,#040e2a,#071540);border:2px solid var(--gold);border-radius:14px;padding:18px;text-align:center;cursor:pointer">
-        <div style="font-size:24px;margin-bottom:8px">✝️</div>
-        <div style="color:#fff;font-weight:700;font-size:14px">Regular</div>
-        <div style="color:rgba(255,255,255,.6);font-size:11px;margin-top:4px">Default navy & gold</div>
-      </div>
-      <div onclick="setTheme('christmas')" class="theme-card" style="background:linear-gradient(135deg,#051a0a,#0d3b1a);border:2px solid #c8a432;border-radius:14px;padding:18px;text-align:center;cursor:pointer">
-        <div style="font-size:24px;margin-bottom:8px">🎄</div>
-        <div style="color:#fff;font-weight:700;font-size:14px">Christmas</div>
-        <div style="color:rgba(255,255,255,.6);font-size:11px;margin-top:4px">Deep green & gold</div>
-      </div>
-      <div onclick="setTheme('easter')" class="theme-card" style="background:linear-gradient(135deg,#150525,#2a0a4a);border:2px solid #e8b030;border-radius:14px;padding:18px;text-align:center;cursor:pointer">
-        <div style="font-size:24px;margin-bottom:8px">✝️</div>
-        <div style="color:#fff;font-weight:700;font-size:14px">Easter</div>
-        <div style="color:rgba(255,255,255,.6);font-size:11px;margin-top:4px">Deep purple & gold</div>
-      </div>
-      <div onclick="setTheme('newyear')" class="theme-card" style="background:linear-gradient(135deg,#030e28,#0a2a5c);border:2px solid #ffd700;border-radius:14px;padding:18px;text-align:center;cursor:pointer">
-        <div style="font-size:24px;margin-bottom:8px">🎊</div>
-        <div style="color:#fff;font-weight:700;font-size:14px">New Year</div>
-        <div style="color:rgba(255,255,255,.6);font-size:11px;margin-top:4px">Deep blue & bright gold</div>
-      </div>
-    </div>
-    <div id="theme-status" style="margin-top:16px;text-align:center;font-size:13px;color:var(--muted)">Current theme: <span id="current-theme-name" style="font-weight:700;color:var(--navy)">Regular</span></div>
   </div>
 
   <!-- AVAILABILITY TAB -->
@@ -776,11 +686,6 @@ Long live Graceland Baptist Church, Ogbomoso!</div>
       <input class="finp" id="gdate" type="date"/>
     </div>
     <div class="fgrp">
-      <label class="flbl">Custom Cover Photo (Optional)</label>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Paste a Google Drive link to use as album cover. Leave empty to use first photo automatically.</div>
-      <input class="finp" id="gthumb" placeholder="https://drive.google.com/file/d/... (optional)"/>
-    </div>
-    <div class="fgrp">
       <label class="flbl">Google Drive Photo Links *</label>
       <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Paste one link per line. Each photo must be set to "Anyone with link can view" on Google Drive.</div>
       <textarea class="finp" id="glinks" style="height:140px;resize:vertical" placeholder="https://drive.google.com/file/d/xxxxx/view&#10;https://drive.google.com/file/d/yyyyy/view&#10;https://drive.google.com/file/d/zzzzz/view"></textarea>
@@ -892,7 +797,6 @@ function goTo(p){
 }
 
 window.addEventListener('load',()=>{
-  loadSavedTheme();
   const h=window.location.hash.replace('#','');
   // Only restore admin if coming from #panel link
   if(h==='panel'){
@@ -1010,16 +914,6 @@ function toggleDay(k){
   });
 }
 
-// ── TIME FORMATTER ───────────────────────────────────
-function formatTime(t){
-  if(!t) return '';
-  const [h,m] = t.split(':').map(Number);
-  if(isNaN(h)) return t;
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  const hr = h % 12 || 12;
-  return `${hr}:${m.toString().padStart(2,'0')} ${ampm}`;
-}
-
 // ── PROGRAM TAB SWITCHER ─────────────────────────────
 function switchProgTab(tab){
   const schedDiv = document.getElementById('prog-schedule');
@@ -1075,7 +969,7 @@ window.renderEvs=function(){
     ${e.pinned?'<div class="plbl">★ Pinned</div>':''}
     <div style="margin-bottom:10px">${ctag(e.category)}${e.completed?'<span class="ctag" style="background:#eafaf0;border:1px solid #4caf50;color:#1a7a30">Completed</span>':''}</div>
     <div style="font-weight:700;font-size:16px;color:var(--text);margin-bottom:5px;text-decoration:${e.completed?'line-through':'none'};${e.pinned?'padding-right:80px':''}">${e.title}</div>
-    <div style="color:var(--blue);font-size:13px;margin-bottom:${e.desc?'6px':'0'}">${e.date}${e.time?' · '+formatTime(e.time):''}</div>
+    <div style="color:var(--blue);font-size:13px;margin-bottom:${e.desc?'6px':'0'}">${e.date}${e.time?' · '+e.time:''}</div>
     ${e.desc?`<div style="font-size:13px;color:var(--muted);line-height:1.75">${e.desc}</div>`:''}
   </div>`).join('');
 };
@@ -1087,7 +981,7 @@ window.renderAdminEvs=function(){
     ${e.pinned?'<div class="plbl">★ Pinned</div>':''}
     <div style="margin-bottom:8px">${ctag(e.category)}</div>
     <div style="font-weight:700;font-size:15px;color:var(--text);margin-bottom:4px;text-decoration:${e.completed?'line-through':'none'};${e.pinned?'padding-right:70px':''}">${e.title}</div>
-    <div style="color:var(--blue);font-size:12px;margin-bottom:10px">${e.date}${e.time?' · '+formatTime(e.time):''}</div>
+    <div style="color:var(--blue);font-size:12px;margin-bottom:10px">${e.date}${e.time?' · '+e.time:''}</div>
     <div class="abtns">
       <button class="be" onclick="openEF('${e.id}')">Edit</button>
       <button class="bp" onclick="togPin('${e.id}','${e.pinned}')">${e.pinned?'Unpin':'Pin'}</button>
@@ -1138,7 +1032,6 @@ function switchAdminTab(tab){
   if(tab==='birthdays') renderAdminBirthdays();
   if(tab==='gallery') renderAdminGallery();
   if(tab==='avail') renderAdminCalendar();
-  if(tab==='theme'){ const saved=localStorage.getItem('glbc_theme')||''; const names={'':`Regular`,'christmas':'Christmas','easter':'Easter','newyear':'New Year'}; const el=document.getElementById('current-theme-name'); if(el) el.textContent=names[saved]||'Regular'; }
 }
 
 // ── SERMONS ───────────────────────────────────────────
@@ -1456,12 +1349,12 @@ window.renderGallery = function(){
   const groups = {};
   window._gallery.forEach(g => {
     const cat = g.category;
-    if(!groups[cat]) groups[cat] = {date:g.date, items:[], thumb:g.thumb||''};
+    if(!groups[cat]) groups[cat] = {date:g.date, items:[]};
     (g.links||[]).forEach(lnk => groups[cat].items.push(lnk));
   });
   el.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">' +
     Object.entries(groups).map(([cat, data]) => {
-      const cover = data.thumb ? gdriveDirect(data.thumb) : (data.items[0] ? gdriveDirect(data.items[0]) : '');
+      const cover = data.items[0] ? gdriveDirect(data.items[0]) : '';
       const count = data.items.length;
       return `<div onclick="openAlbum('${encodeURIComponent(cat)}')" style="cursor:pointer;border-radius:14px;overflow:hidden;background:#fff;border:1.5px solid rgba(200,164,50,.25);box-shadow:0 2px 12px rgba(10,26,92,.08)">
         <div style="aspect-ratio:4/3;background:linear-gradient(135deg,var(--navy),var(--navyM));overflow:hidden;position:relative">
@@ -1508,117 +1401,6 @@ function renderAlbumView(cat){
         </div>`;
       }).join('')}
     </div>`;
-}
-
-// ── SEASONAL DECORATIONS ─────────────────────────────
-let _particleInterval = null;
-
-function clearParticles(){
-  if(_particleInterval){ clearInterval(_particleInterval); _particleInterval=null; }
-  document.querySelectorAll('.season-particle').forEach(p=>p.remove());
-}
-
-function startParticles(theme){
-  clearParticles();
-  if(!theme) return;
-
-  const configs = {
-    christmas: {
-      particles: ['❄️','❄','✦','❅','❆','🎄'],
-      count: 18, minDur: 4, maxDur: 9, minSize: 12, maxSize: 22
-    },
-    newyear: {
-      particles: ['✨','⭐','🌟','💫','✦','★','🎊'],
-      count: 20, minDur: 3, maxDur: 7, minSize: 12, maxSize: 20
-    },
-    easter: {
-      particles: ['✿','❀','✾','🌸','✝'],
-      count: 14, minDur: 5, maxDur: 10, minSize: 13, maxSize: 20
-    }
-  };
-
-  const cfg = configs[theme];
-  if(!cfg) return;
-
-  function spawnParticle(){
-    const el = document.createElement('div');
-    el.className = 'season-particle';
-    el.textContent = cfg.particles[Math.floor(Math.random()*cfg.particles.length)];
-    const size = cfg.minSize + Math.random()*(cfg.maxSize-cfg.minSize);
-    const dur = cfg.minDur + Math.random()*(cfg.maxDur-cfg.minDur);
-    const left = Math.random()*100;
-    const delay = Math.random()*-8;
-    el.style.cssText = `left:${left}vw;font-size:${size}px;animation-duration:${dur}s;animation-delay:${delay}s;opacity:${0.4+Math.random()*0.5}`;
-    document.body.appendChild(el);
-    // Remove after animation completes to avoid memory buildup
-    setTimeout(()=>el.remove(), (dur+Math.abs(delay)+1)*1000);
-  }
-
-  // Spawn initial batch
-  for(let i=0;i<cfg.count;i++) setTimeout(spawnParticle, Math.random()*3000);
-  // Keep spawning
-  _particleInterval = setInterval(()=>spawnParticle(), 800);
-}
-
-const TICKER_MESSAGES = {
-  christmas: '🎄 Graceland Baptist Church wishes you a Merry Christmas and a Blessed Season! · ❄️ May the love of Christ fill your heart this Christmas! · 🎄 Glory to God in the Highest — Graceland Baptist Church, Ogbomoso · ❄️ ',
-  newyear: '🎊 Graceland Baptist Church wishes you a Prosperous New Year! · ✨ May God's grace abound in your life this new year! · 🎊 Happy New Year from Graceland Baptist Church, Ogbomoso · ✨ ',
-  easter: '✝️ He is Risen! Graceland Baptist Church wishes you a Blessed Easter! · 🌸 Hallelujah! Christ is Risen Indeed! · ✝️ Happy Easter from Graceland Baptist Church, Ogbomoso · 🌸 '
-};
-
-function updateTicker(theme){
-  const ticker = document.getElementById('season-ticker');
-  const t1 = document.getElementById('ticker-text');
-  const t2 = document.getElementById('ticker-text2');
-  if(!ticker) return;
-  if(!theme || !TICKER_MESSAGES[theme]){
-    ticker.style.display = 'none';
-    return;
-  }
-  const msg = TICKER_MESSAGES[theme];
-  t1.textContent = msg;
-  t2.textContent = msg;
-  ticker.style.display = 'block';
-  // Adjust speed based on message length
-  const speed = Math.max(20, msg.length * 0.35);
-  document.getElementById('ticker-track').style.animationDuration = speed + 's';
-}
-
-function setTheme(theme){
-  // Remove all theme classes
-  document.body.classList.remove('theme-christmas','theme-easter','theme-newyear');
-  if(theme) document.body.classList.add('theme-'+theme);
-  // Save to Firebase so ALL visitors see the change
-  fb(()=>{
-    const ref = window._ref(window._db,'settings','theme');
-    window._upd(ref,{value:theme}).catch(()=>{
-      window._add(window._col(window._db,'settings'),{value:theme,_id:'theme'});
-    });
-  });
-  startParticles(theme);
-  updateTicker(theme);
-  // Update status
-  const names = {'':"Regular",'christmas':"Christmas",'easter':"Easter",'newyear':"New Year"};
-  const el = document.getElementById('current-theme-name');
-  if(el) el.textContent = names[theme]||"Regular";
-  // Update active card borders
-  document.querySelectorAll('.theme-card').forEach(c=>c.style.opacity='0.7');
-  // Flash confirmation
-  const status = document.getElementById('theme-status');
-  if(status){ status.innerHTML = '✅ Theme changed to <strong>'+( names[theme]||"Regular")+'</strong> — visible to all visitors!'; setTimeout(()=>{ status.innerHTML = 'Current theme: <span id="current-theme-name" style="font-weight:700;color:var(--navy)">'+(names[theme]||"Regular")+'</span>'; },3000); }
-}
-
-// Load saved theme on page load
-function loadSavedTheme(){
-  // Theme loaded via Firebase — apply pending if already received
-  window._currentTheme = '';
-  // If Firebase already fired before this function loaded
-  setTimeout(()=>{
-    if(window._pendingTheme){
-      startParticles(window._pendingTheme);
-      updateTicker(window._pendingTheme);
-    }
-  }, 500);
 }
 
 function closeAlbum(){
@@ -1678,7 +1460,6 @@ function openGF(id){
   editGId = id;
   document.getElementById('gcat').value='';
   document.getElementById('gdate').value='';
-  document.getElementById('gthumb').value='';
   document.getElementById('glinks').value='';
   document.getElementById('gf-err').style.display='none';
   document.getElementById('gf-ov').classList.add('open');
@@ -1690,11 +1471,10 @@ function saveGallery(){
   const raw = document.getElementById('glinks').value.trim();
   const err = document.getElementById('gf-err');
   if(!cat||!raw){ err.textContent='Please fill in the event name and at least one photo link.'; err.style.display='block'; return; }
-  const thumb = document.getElementById('gthumb').value.trim();
   const links = raw.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
   if(!links.length){ err.textContent='Please paste at least one Google Drive photo link.'; err.style.display='block'; return; }
   err.style.display='none';
-  fb(()=>window._add(window._col(window._db,"gallery"),{category:cat,date,links,thumb,createdAt:Date.now()}).then(()=>{
+  fb(()=>window._add(window._col(window._db,"gallery"),{category:cat,date,links,createdAt:Date.now()}).then(()=>{
     closeGF();
     if(window._pg==='admin') renderAdminGallery();
   }));
@@ -1718,26 +1498,33 @@ function saveMorePhotos(){
   err.style.display='none';
   // Get existing gallery item and append new links
   fb(()=>{
-    const g = window._gallery.find(x=>x.id===addMoreId);
-    const existingLinks = g ? (g.links||[]) : [];
-    const allLinks = [...existingLinks, ...newLinks];
-    window._upd(window._ref(window._db,"gallery",addMoreId),{links:allLinks}).then(()=>{
-      closeAM();
+    import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js").then(({doc, getDoc, updateDoc, arrayUnion})=>{
+      const ref = doc(window._db, "gallery", addMoreId);
+      updateDoc(ref, { links: arrayUnion(...newLinks) }).then(()=>{
+        closeAM();
+      });
     });
   });
 }
 
 function removePhoto(albumId, photoIndex){
   if(!confirm('Remove this photo from the album?')) return;
-  const g = window._gallery.find(x=>x.id===albumId);
-  if(!g) return;
-  const links = [...(g.links||[])];
-  links.splice(photoIndex, 1);
   fb(()=>{
-    window._upd(window._ref(window._db,"gallery",albumId),{links}).then(()=>{
-      g.links = links;
-      renderAdminGallery();
-      renderGallery();
+    import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js").then(({doc, getDoc, updateDoc})=>{
+      const ref = doc(window._db, "gallery", albumId);
+      getDoc(ref).then(snap=>{
+        if(snap.exists()){
+          const links = [...(snap.data().links||[])];
+          links.splice(photoIndex, 1);
+          updateDoc(ref, {links}).then(()=>{
+            // Update local state
+            const g = window._gallery.find(x=>x.id===albumId);
+            if(g) g.links = links;
+            renderAdminGallery();
+            renderGallery();
+          });
+        }
+      });
     });
   });
 }
