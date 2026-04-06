@@ -61,12 +61,13 @@
     snap.docs.forEach(d => {
       if(d.id === 'theme'){
         const theme = d.data().value || '';
-        // Apply theme to all visitors
+        window._pendingTheme = theme;
         document.body.classList.remove('theme-christmas','theme-easter','theme-newyear');
         if(theme) document.body.classList.add('theme-'+theme);
-        startParticles(theme);
-        updateTicker(theme);
         window._currentTheme = theme;
+        // Call functions only if they exist (loaded after module)
+        if(typeof startParticles === 'function') startParticles(theme);
+        if(typeof updateTicker === 'function') updateTicker(theme);
       }
     });
   });
@@ -1589,8 +1590,9 @@ function setTheme(theme){
   if(theme) document.body.classList.add('theme-'+theme);
   // Save to Firebase so ALL visitors see the change
   fb(()=>{
-    import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js").then(({doc,setDoc})=>{
-      setDoc(doc(window._db,'settings','theme'),{value:theme});
+    const ref = window._ref(window._db,'settings','theme');
+    window._upd(ref,{value:theme}).catch(()=>{
+      window._add(window._col(window._db,'settings'),{value:theme,_id:'theme'});
     });
   });
   startParticles(theme);
@@ -1608,8 +1610,15 @@ function setTheme(theme){
 
 // Load saved theme on page load
 function loadSavedTheme(){
-  // Theme now loaded via Firebase real-time listener
+  // Theme loaded via Firebase — apply pending if already received
   window._currentTheme = '';
+  // If Firebase already fired before this function loaded
+  setTimeout(()=>{
+    if(window._pendingTheme){
+      startParticles(window._pendingTheme);
+      updateTicker(window._pendingTheme);
+    }
+  }, 500);
 }
 
 function closeAlbum(){
@@ -1709,33 +1718,26 @@ function saveMorePhotos(){
   err.style.display='none';
   // Get existing gallery item and append new links
   fb(()=>{
-    import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js").then(({doc, getDoc, updateDoc, arrayUnion})=>{
-      const ref = doc(window._db, "gallery", addMoreId);
-      updateDoc(ref, { links: arrayUnion(...newLinks) }).then(()=>{
-        closeAM();
-      });
+    const g = window._gallery.find(x=>x.id===addMoreId);
+    const existingLinks = g ? (g.links||[]) : [];
+    const allLinks = [...existingLinks, ...newLinks];
+    window._upd(window._ref(window._db,"gallery",addMoreId),{links:allLinks}).then(()=>{
+      closeAM();
     });
   });
 }
 
 function removePhoto(albumId, photoIndex){
   if(!confirm('Remove this photo from the album?')) return;
+  const g = window._gallery.find(x=>x.id===albumId);
+  if(!g) return;
+  const links = [...(g.links||[])];
+  links.splice(photoIndex, 1);
   fb(()=>{
-    import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js").then(({doc, getDoc, updateDoc})=>{
-      const ref = doc(window._db, "gallery", albumId);
-      getDoc(ref).then(snap=>{
-        if(snap.exists()){
-          const links = [...(snap.data().links||[])];
-          links.splice(photoIndex, 1);
-          updateDoc(ref, {links}).then(()=>{
-            // Update local state
-            const g = window._gallery.find(x=>x.id===albumId);
-            if(g) g.links = links;
-            renderAdminGallery();
-            renderGallery();
-          });
-        }
-      });
+    window._upd(window._ref(window._db,"gallery",albumId),{links}).then(()=>{
+      g.links = links;
+      renderAdminGallery();
+      renderGallery();
     });
   });
 }
