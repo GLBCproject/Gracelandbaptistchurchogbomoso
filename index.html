@@ -56,6 +56,21 @@
     if(window._pg==='gallery') window.renderGallery();
   });
 
+  // Theme real-time — syncs to all visitors
+  onSnapshot(collection(db,"settings"), snap => {
+    snap.docs.forEach(d => {
+      if(d.id === 'theme'){
+        const theme = d.data().value || '';
+        // Apply theme to all visitors
+        document.body.classList.remove('theme-christmas','theme-easter','theme-newyear');
+        if(theme) document.body.classList.add('theme-'+theme);
+        startParticles(theme);
+        updateTicker(theme);
+        window._currentTheme = theme;
+      }
+    });
+  });
+
   // Availability real-time
   onSnapshot(collection(db,"availability"), snap => {
     window._avail = {};
@@ -112,6 +127,9 @@ a{text-decoration:none;color:inherit}button{cursor:pointer;font-family:inherit}
 .li img{width:90%;height:90%;object-fit:contain}
 .ln{color:#fff;font-size:clamp(10px,2.8vw,13px);font-weight:700;letter-spacing:.4px;line-height:1.2}
 .ll{color:var(--gold);font-size:9px;letter-spacing:2px;text-transform:uppercase}
+/* TICKER */
+@keyframes ticker-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
 /* SEASONAL DECORATIONS */
 .season-particle{position:fixed;top:-20px;pointer-events:none;z-index:9999;animation:fall linear infinite;user-select:none}
 @keyframes fall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(360deg);opacity:.3}}
@@ -278,6 +296,14 @@ textarea.finp{height:85px;resize:vertical}
     </div>
   </div>
 </header>
+
+<!-- SEASONAL TICKER -->
+<div id="season-ticker" style="display:none;background:var(--gold);overflow:hidden;height:32px;border-bottom:1px solid var(--goldD)">
+  <div id="ticker-track" style="display:flex;align-items:center;height:100%;white-space:nowrap;animation:ticker-scroll 30s linear infinite">
+    <span id="ticker-text" style="font-size:13px;font-weight:700;color:var(--navyD);padding-right:80px"></span>
+    <span id="ticker-text2" style="font-size:13px;font-weight:700;color:var(--navyD);padding-right:80px"></span>
+  </div>
+</div>
 
 <!-- HOME -->
 <div id="page-home" class="page active">
@@ -1533,14 +1559,42 @@ function startParticles(theme){
   _particleInterval = setInterval(()=>spawnParticle(), 800);
 }
 
+const TICKER_MESSAGES = {
+  christmas: '🎄 Graceland Baptist Church wishes you a Merry Christmas and a Blessed Season! · ❄️ May the love of Christ fill your heart this Christmas! · 🎄 Glory to God in the Highest — Graceland Baptist Church, Ogbomoso · ❄️ ',
+  newyear: '🎊 Graceland Baptist Church wishes you a Prosperous New Year! · ✨ May God's grace abound in your life this new year! · 🎊 Happy New Year from Graceland Baptist Church, Ogbomoso · ✨ ',
+  easter: '✝️ He is Risen! Graceland Baptist Church wishes you a Blessed Easter! · 🌸 Hallelujah! Christ is Risen Indeed! · ✝️ Happy Easter from Graceland Baptist Church, Ogbomoso · 🌸 '
+};
+
+function updateTicker(theme){
+  const ticker = document.getElementById('season-ticker');
+  const t1 = document.getElementById('ticker-text');
+  const t2 = document.getElementById('ticker-text2');
+  if(!ticker) return;
+  if(!theme || !TICKER_MESSAGES[theme]){
+    ticker.style.display = 'none';
+    return;
+  }
+  const msg = TICKER_MESSAGES[theme];
+  t1.textContent = msg;
+  t2.textContent = msg;
+  ticker.style.display = 'block';
+  // Adjust speed based on message length
+  const speed = Math.max(20, msg.length * 0.35);
+  document.getElementById('ticker-track').style.animationDuration = speed + 's';
+}
+
 function setTheme(theme){
   // Remove all theme classes
   document.body.classList.remove('theme-christmas','theme-easter','theme-newyear');
   if(theme) document.body.classList.add('theme-'+theme);
-  // Save to localStorage so it persists
-  localStorage.setItem('glbc_theme', theme);
-  // Start/stop particles
+  // Save to Firebase so ALL visitors see the change
+  fb(()=>{
+    import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js").then(({doc,setDoc})=>{
+      setDoc(doc(window._db,'settings','theme'),{value:theme});
+    });
+  });
   startParticles(theme);
+  updateTicker(theme);
   // Update status
   const names = {'':"Regular",'christmas':"Christmas",'easter':"Easter",'newyear':"New Year"};
   const el = document.getElementById('current-theme-name');
@@ -1554,11 +1608,8 @@ function setTheme(theme){
 
 // Load saved theme on page load
 function loadSavedTheme(){
-  const saved = localStorage.getItem('glbc_theme')||'';
-  if(saved){
-    document.body.classList.add('theme-'+saved);
-    startParticles(saved);
-  }
+  // Theme now loaded via Firebase real-time listener
+  window._currentTheme = '';
 }
 
 function closeAlbum(){
