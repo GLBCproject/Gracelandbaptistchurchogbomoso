@@ -313,8 +313,8 @@ textarea.finp{height:85px;resize:vertical}
 <!-- SEASONAL TICKER -->
 <div id="season-ticker" style="display:none;background:var(--gold);overflow:hidden;height:32px;border-bottom:1px solid var(--goldD)">
   <div id="ticker-track" style="display:flex;align-items:center;height:100%;white-space:nowrap;animation:ticker-scroll 30s linear infinite">
-    <span id="ticker-text" style="font-size:13px;font-weight:700;color:var(--navyD);padding-right:80px"></span>
-    <span id="ticker-text2" style="font-size:13px;font-weight:700;color:var(--navyD);padding-right:80px"></span>
+    <span id="ticker-text" style="font-size:13px;font-weight:600;color:var(--navyD);padding-right:100px;font-style:italic;letter-spacing:.3px"></span>
+    <span id="ticker-text2" style="font-size:13px;font-weight:600;color:var(--navyD);padding-right:100px;font-style:italic;letter-spacing:.3px"></span>
   </div>
 </div>
 
@@ -1573,9 +1573,9 @@ function startParticles(theme){
 }
 
 const TICKER_MESSAGES = {
-  christmas: "* Graceland Baptist Church wishes you a Merry Christmas! * Glory to God in the Highest! * May the love and grace of Christ fill your heart this Christmas Season *",
-  newyear: "* Happy New Year from Graceland Baptist Church, Ogbomoso! * May God bless you with joy, peace and prosperity this new year! * His mercies are new every morning *",
-  easter: "* He is Risen! Happy Easter from Graceland Baptist Church! * Hallelujah! Christ is Risen Indeed! * May the Resurrection power fill your life this Easter season *"
+  christmas: "Graceland Baptist Church wishes you a Merry Christmas and a Blessed Season · Glory to God in the Highest · May the love and grace of Christ fill your heart this Christmas · Graceland Baptist Church, Ogbomoso ·",
+  newyear: "Happy New Year from Graceland Baptist Church, Ogbomoso · May God bless you with joy, peace and prosperity in this new year · His mercies are new every morning · Graceland Baptist Church, Ogbomoso ·",
+  easter: "He is Risen! Graceland Baptist Church wishes you a Blessed Easter · Hallelujah! Christ is Risen Indeed · May the Resurrection power fill your life this season · Graceland Baptist Church, Ogbomoso ·"
 };
 
 function updateTicker(theme){
